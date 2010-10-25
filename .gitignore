@@ -5,6 +5,10 @@
 *.tmproj
 tmtags
 
+## IDEA/RUBYMINE
+*.idea
+.idea/*
+
 ## EMACS
 *~
 \#*

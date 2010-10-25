@@ -4,15 +4,41 @@ module Lingua
     # characteristic
     class Readability
       module Flesch
-
+        def analysis
+          flesch
+        end
+        # Flesch reading ease of the text sample. A higher score indicates text
+        # that is easier to read. The score is on a 100-point scale, and a score
+        # of 60-70 is regarded as optimal for ordinary text.
+        def flesch
+          206.835 - (1.015 * words_per_sentence) - (84.6 * syllables_per_word)
+        end
       end
 
       module FleschKinkaid
-
+        def analysis
+          kinkaid
+        end
+        # Flesch-Kincaid level of the text sample. This measure scores text based
+        # on the American school grade system; a score of 7.0 would indicate that
+        # the text is readable by a seventh grader. A score of 7.0 to 8.0 is
+        # regarded as optimal for ordinary text.
+        def kincaid
+          (11.8 * syllables_per_word) +  (0.39 * words_per_sentence) - 15.59
+        end
       end
 
       module Fog
-        
+        def analysis
+          fog
+        end
+        # The Gunning Fog Index of the text sample. The index indicates the number
+        # of years of formal education that a reader of average intelligence would
+        # need to comprehend the text. A higher score indicates harder text; a
+        # value of around 12 is indicated as ideal for ordinary text.
+        def fog
+          ( words_per_sentence +  percent_fog_complex_words ) * 0.4
+        end
       end
       attr_reader :text, :paragraphs, :sentences, :words, :frequencies
 
@@ -85,29 +111,6 @@ module Lingua
       # is not installed.
       def syllables_per_word
         @syllables.to_f / words.length.to_f
-      end
-
-      # Flesch-Kincaid level of the text sample. This measure scores text based
-      # on the American school grade system; a score of 7.0 would indicate that
-      # the text is readable by a seventh grader. A score of 7.0 to 8.0 is
-      # regarded as optimal for ordinary text.
-      def kincaid
-        (11.8 * syllables_per_word) +  (0.39 * words_per_sentence) - 15.59
-      end
-
-      # Flesch reading ease of the text sample. A higher score indicates text
-      # that is easier to read. The score is on a 100-point scale, and a score
-      # of 60-70 is regarded as optimal for ordinary text.
-      def flesch
-        206.835 - (1.015 * words_per_sentence) - (84.6 * syllables_per_word)
-      end
-
-      # The Gunning Fog Index of the text sample. The index indicates the number
-      # of years of formal education that a reader of average intelligence would
-      # need to comprehend the text. A higher score indicates harder text; a
-      # value of around 12 is indicated as ideal for ordinary text.
-      def fog
-        ( words_per_sentence +  percent_fog_complex_words ) * 0.4
       end
 
       # The percentage of words that are defined as "complex" for the purpose of
