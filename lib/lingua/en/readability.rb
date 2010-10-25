@@ -67,7 +67,7 @@ module Lingua
         end
 
         def fog_report_string
-          "Fog Index                      %2.2f \n",
+          "Fog Index                      %2.2f \n"
         end
       end
       attr_reader :text, :paragraphs, :sentences, :words, :frequencies
