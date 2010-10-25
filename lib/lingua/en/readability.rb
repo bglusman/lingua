@@ -13,6 +13,14 @@ module Lingua
         def flesch
           206.835 - (1.015 * words_per_sentence) - (84.6 * syllables_per_word)
         end
+
+        def report_string
+          flesch_report_string
+        end
+
+        def flesch_report_string
+          "Flesch score                   %2.2f \n"
+        end
       end
 
       module FleschKinkaid
@@ -26,6 +34,14 @@ module Lingua
         def kincaid
           (11.8 * syllables_per_word) +  (0.39 * words_per_sentence) - 15.59
         end
+
+        def report_string
+          kinkaid_report_string
+        end
+
+        def kinkaid_report_string
+          "Flesh-Kincaid grade level      %2.2f \n"
+        end
       end
 
       module Fog
@@ -38,6 +54,20 @@ module Lingua
         # value of around 12 is indicated as ideal for ordinary text.
         def fog
           ( words_per_sentence +  percent_fog_complex_words ) * 0.4
+        end
+
+        # The percentage of words that are defined as "complex" for the purpose of
+        # the Fog Index. This is non-hyphenated words of three or more syllabes.
+        def percent_fog_complex_words
+          ( @complex_words.to_f / words.length.to_f ) * 100
+        end
+
+        def report_string
+          fog_report_string
+        end
+
+        def fog_report_string
+          "Fog Index                      %2.2f \n",
         end
       end
       attr_reader :text, :paragraphs, :sentences, :words, :frequencies
@@ -113,11 +143,6 @@ module Lingua
         @syllables.to_f / words.length.to_f
       end
 
-      # The percentage of words that are defined as "complex" for the purpose of
-      # the Fog Index. This is non-hyphenated words of three or more syllabes.
-      def percent_fog_complex_words
-        ( @complex_words.to_f / words.length.to_f ) * 100
-      end
 
       # Return a nicely formatted report on the sample, showing most the useful
       # statistics about the text sample.
