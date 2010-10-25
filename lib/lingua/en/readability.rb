@@ -74,7 +74,7 @@ module Lingua
 
       # The constructor accepts the text to be analysed, and returns a report
       # object which gives access to the
-      def initialize(text)
+      def initialize(text, analysis=:all)
         @text                = text.dup
         @paragraphs          = Lingua::EN::Paragraph.paragraphs(self.text)
         @sentences           = Lingua::EN::Sentence.sentences(self.text)
@@ -83,7 +83,18 @@ module Lingua
         @frequencies.default = 0
         @syllables           = 0
         @complex_words       = 0
+        @analysis            = analysis
         count_words
+        case analysis
+          when :all
+            include Fog, Flesch, FleschKinkaid
+          when :fog
+            include Fog
+          when :flesch
+            include Flesch
+          when :kinkaid
+            include FleschKinkaid
+        end
       end
 
       # The number of paragraphs in the sample. A paragraph is defined as a
@@ -143,24 +154,33 @@ module Lingua
         @syllables.to_f / words.length.to_f
       end
 
+      report_body = Proc.new {|*analyses|
+          sprintf "Number of paragraphs           %d \n" <<
+          "Number of sentences            %d \n" <<
+          "Number of words                %d \n" <<
+          "Number of characters           %d \n\n" <<
+          "Average words per sentence     %.2f \n" <<
+          "Average syllables per word     %.2f \n\n" <<
+          analyses.each_with_object {|anal, cumul| cumul << anal.report_string},
+            num_paragraphs, num_sentences, num_words, num_characters,
+            words_per_sentence, syllables_per_word, analyses.each {|anal| anal.analysis}
+      }
 
       # Return a nicely formatted report on the sample, showing most the useful
       # statistics about the text sample.
-      def report
-        sprintf "Number of paragraphs           %d \n" <<
-        "Number of sentences            %d \n" <<
-        "Number of words                %d \n" <<
-        "Number of characters           %d \n\n" <<
-        "Average words per sentence     %.2f \n" <<
-        "Average syllables per word     %.2f \n\n" <<
-        "Flesch score                   %2.2f \n" <<
-        "Flesh-Kincaid grade level      %2.2f \n" <<
-        "Fog Index                      %2.2f \n",
-          num_paragraphs, num_sentences, num_words, num_characters,
-          words_per_sentence, syllables_per_word,
-          flesch, kincaid, fog
-      end
 
+      def report
+        case @analysis
+          when :all
+            report_body.call(Flesch, FleschKinkaid, Fog)
+          when :flesch
+            report_body.call(Flesch)
+          when :kinkaid
+            report_body.call(Kinkaid)
+          when :fog
+            report_body.call(Fog)
+        end
+      end
       private
       def count_words
         @text.scan(/\b([a-z][a-z\-']*)\b/i).each do |match|
