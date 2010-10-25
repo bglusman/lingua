@@ -3,6 +3,17 @@ module Lingua
     # The class Lingua::EN::Readability takes English text and analyses formal
     # characteristic
     class Readability
+      module Flesch
+
+      end
+
+      module FleschKinkaid
+
+      end
+
+      module Fog
+        
+      end
       attr_reader :text, :paragraphs, :sentences, :words, :frequencies
 
       # The constructor accepts the text to be analysed, and returns a report
