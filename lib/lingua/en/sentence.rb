@@ -3,13 +3,8 @@ module Lingua
     # The class Lingua::EN::Sentence takes English text, and attempts to
     # split it up into sentences, respecting abbreviations.
 
-    class Sentence
-      class << self
-        attr_reader :abbreviations
-        attr_reader :abbr_regex
-      end
-
-      EOS = "\001" unless defined?(EOS) # temporary end of sentence marker
+    module Sentence
+      extend self
 
       Titles   = [ 'jr', 'mr', 'mrs', 'ms', 'dr', 'prof', 'sr', 'sen', 'rep',
         'rev', 'gov', 'atty', 'supt', 'det', 'rev', 'col','gen', 'lt',
@@ -31,7 +26,12 @@ module Lingua
       # Finds punctuation that ends paragraphs.
       PUNCTUATION_DETECT = /((?:[\.?!]|[\r\n]+)(?:\"|\'|\)|\]|\})?)(\s+)/ unless defined?(PUNCTUATION_DETECT)
 
+      EOS = "\001" unless defined?(EOS) # temporary end of sentence marker      
+
       CORRECT_ABBR = /(#{ABBR_DETECT})#{EOS}(\s+[a-z0-9])/
+
+      ABBREVIATIONS = Titles + Entities + Months + Days + Streets + Misc
+      
 
       # Split the passed text into individual sentences, trim these and return
       # as an array. A sentence is marked by one of the punctuation marks ".", "?"
@@ -54,7 +54,7 @@ module Lingua
         text.gsub!(CORRECT_ABBR, "\\1\\2")
 
         # Correct abbreviations
-        text.gsub!(@abbr_regex) { $1 << '.' }
+        text.gsub!(abbr_regex) { $1 << '.' }
 
         # Split on EOS marker, get rid of trailing whitespace.
         # Remove empty sentences.
@@ -66,22 +66,14 @@ module Lingua
       # Adds a list of abbreviations to the list that's used to detect false
       # sentence ends. Return the current list of abbreviations in use.
       def self.abbreviation(*abbreviations)
-        @abbreviations += abbreviations
-        @abbreviations.uniq!
-        set_abbr_regex!
-        @abbreviations
+        ABBREVIATIONS << abbreviations
+        ABBREVIATIONS.replace(ABBREVIATIONS.uniq)
+        ABBREVIATIONS
       end
 
-      def self.initialize_abbreviations!
-        @abbreviations = Titles + Entities + Months + Days + Streets + Misc
-        set_abbr_regex!
+      def abbr_regex
+        / (#{ABBREVIATIONS.join("|")})\.#{EOS}/i
       end
-
-      def self.set_abbr_regex!
-        @abbr_regex = / (#{abbreviations.join("|")})\.#{EOS}/i
-      end
-
-      initialize_abbreviations!
     end
   end
 end
