@@ -1,7 +1,9 @@
 require File.dirname(__FILE__) + "/../../spec_helper"
 
+class Temp; include Lingua::EN::Sentence; end
+
 describe Lingua::EN::Sentence do
-  klass = Lingua::EN::Sentence
+  klass = Temp
   
   describe "#sentences" do
     describe "multi-paragraph text" do
