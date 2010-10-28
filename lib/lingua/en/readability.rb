@@ -2,7 +2,7 @@ module Lingua
   module EN
     # The class Lingua::EN::Readability takes English text and analyses formal
     # characteristic
-    class Readability
+    module Readable
       module Flesch
         def analysis
           flesch
@@ -70,6 +70,10 @@ module Lingua
           "Fog Index                      %2.2f \n"
         end
       end
+    end
+
+    class Readability
+      include Readable
       attr_reader :text, :paragraphs, :sentences, :words, :frequencies
 
       # The constructor accepts the text to be analysed, and returns a report
@@ -87,15 +91,24 @@ module Lingua
         count_words
         case analysis
           when :all
+            class << self
             include Fog, Flesch, FleschKinkaid
-          when :fog
+          end
+        when :fog
+          class << self
             include Fog
-          when :flesch
-            include Flesch
-          when :kinkaid
+          end
+        when :flesch
+          class << self
+           include Flesch
+          end
+        when :kinkaid
+          class << self
             include FleschKinkaid
+          end
         end
       end
+
 
       # The number of paragraphs in the sample. A paragraph is defined as a
       # newline followed by one or more empty or whitespace-only lines.
@@ -161,9 +174,9 @@ module Lingua
           "Number of characters           %d \n\n" <<
           "Average words per sentence     %.2f \n" <<
           "Average syllables per word     %.2f \n\n" <<
-          analyses.each_with_object {|anal, cumul| cumul << anal.report_string},
+          analyses.each_with_object {|anly, cumul| cumul << anly.report_string},
             num_paragraphs, num_sentences, num_words, num_characters,
-            words_per_sentence, syllables_per_word, analyses.each {|anal| anal.analysis}
+            words_per_sentence, syllables_per_word, *analyses.each {|anal| anal.analysis}
       }
 
       # Return a nicely formatted report on the sample, showing most the useful
