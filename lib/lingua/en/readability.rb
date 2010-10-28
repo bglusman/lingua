@@ -133,6 +133,7 @@ module Lingua
             @complex_words += 1 # for Fog Index
           end
         end
+      end
 
       def count_words
         @text.scan(/\b([a-z][a-z\-']*)\b/i).each do |match|
