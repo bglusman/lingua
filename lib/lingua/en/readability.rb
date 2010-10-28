@@ -123,6 +123,17 @@ module Lingua
       end
 
       private
+      def count_syllables
+        @text.scan(/\b([a-z][a-z\-']*)\b/i).each do |match|
+          word = match[0]
+
+          syllables = Lingua::EN::Syllable.syllables(word)
+          @syllables += syllables
+          if syllables > 2 && !word.include?('-')
+            @complex_words += 1 # for Fog Index
+          end
+        end
+
       def count_words
         @text.scan(/\b([a-z][a-z\-']*)\b/i).each do |match|
           word = match[0]

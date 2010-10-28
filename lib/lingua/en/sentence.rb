@@ -30,8 +30,8 @@ module Lingua
 
       CORRECT_ABBR = /(#{ABBR_DETECT})#{EOS}(\s+[a-z0-9])/
 
-      ABBREVIATIONS = Titles + Entities + Months + Days + Streets + Misc
-      
+      @abbreviations = Titles + Entities + Months + Days + Streets + Misc
+
 
       # Split the passed text into individual sentences, trim these and return
       # as an array. A sentence is marked by one of the punctuation marks ".", "?"
@@ -66,13 +66,13 @@ module Lingua
       # Adds a list of abbreviations to the list that's used to detect false
       # sentence ends. Return the current list of abbreviations in use.
       def self.abbreviation(*abbreviations)
-        ABBREVIATIONS << abbreviations
-        ABBREVIATIONS.replace(ABBREVIATIONS.uniq)
-        ABBREVIATIONS
+        @abbreviations << abbreviations
+        @abbreviations.uniq!
+        @abbreviations
       end
 
       def abbr_regex
-        / (#{ABBREVIATIONS.join("|")})\.#{EOS}/i
+        / (#{@abbreviations.join("|")})\.#{EOS}/i
       end
     end
   end
