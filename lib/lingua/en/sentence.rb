@@ -26,18 +26,18 @@ module Lingua
       # Finds punctuation that ends paragraphs.
       PUNCTUATION_DETECT = /((?:[\.?!]|[\r\n]+)(?:\"|\'|\)|\]|\})?)(\s+)/ unless defined?(PUNCTUATION_DETECT)
 
-      EOS = "\001" unless defined?(EOS) # temporary end of sentence marker      
+      EOS = "\001" unless defined?(EOS) # temporary end of sentence marker
 
       CORRECT_ABBR = /(#{ABBR_DETECT})#{EOS}(\s+[a-z0-9])/
 
-      @abbreviations = Titles + Entities + Months + Days + Streets + Misc
+      DEFAULT_ABBREVIATIONS = Titles + Entities + Months + Days + Streets + Misc
 
 
       # Split the passed text into individual sentences, trim these and return
       # as an array. A sentence is marked by one of the punctuation marks ".", "?"
       # or "!" followed by whitespace. Sequences of full stops (such as an
       # ellipsis marker "..." and stops after a known abbreviation are ignored.
-      def self.sentences(text)
+      def sentences(text)
         # Make sure we work with a duplicate, as we are modifying the
         # text with #gsub!
         text = text.dup
@@ -65,14 +65,18 @@ module Lingua
 
       # Adds a list of abbreviations to the list that's used to detect false
       # sentence ends. Return the current list of abbreviations in use.
-      def self.abbreviation(*abbreviations)
-        @abbreviations << abbreviations
-        @abbreviations.uniq!
-        @abbreviations
+      def abbreviation(*new_abbreviations)
+        abbreviations.concat(new_abbreviations)
+        abbreviations.uniq!
+        abbreviations
+      end
+
+      def abbreviations
+        @abbreviations ||= DEFAULT_ABBREVIATIONS
       end
 
       def abbr_regex
-        / (#{@abbreviations.join("|")})\.#{EOS}/i
+        / (#{abbreviations.join("|")})\.#{EOS}/i
       end
     end
   end
