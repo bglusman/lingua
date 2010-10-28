@@ -3,6 +3,8 @@ module Lingua
     # The class Lingua::EN::Readability takes English text and analyses formal
     # characteristic
     module Readable
+      attr_reader :paragraphs, :sentences, :words, :frequencies
+
       module Flesch
         def analysis
           flesch
@@ -70,44 +72,6 @@ module Lingua
           "Fog Index                      %2.2f \n"
         end
       end
-    end
-
-    class Readability
-      include Readable
-      attr_reader :text, :paragraphs, :sentences, :words, :frequencies
-
-      # The constructor accepts the text to be analysed, and returns a report
-      # object which gives access to the
-      def initialize(text, analysis=:all)
-        @text                = text.dup
-        @paragraphs          = Lingua::EN::Paragraph.paragraphs(self.text)
-        @sentences           = Lingua::EN::Sentence.sentences(self.text)
-        @words               = []
-        @frequencies         = {}
-        @frequencies.default = 0
-        @syllables           = 0
-        @complex_words       = 0
-        @analysis            = analysis
-        count_words
-        case analysis
-          when :all
-            class << self
-            include Fog, Flesch, FleschKinkaid
-          end
-        when :fog
-          class << self
-            include Fog
-          end
-        when :flesch
-          class << self
-           include Flesch
-          end
-        when :kinkaid
-          class << self
-            include FleschKinkaid
-          end
-        end
-      end
 
 
       # The number of paragraphs in the sample. A paragraph is defined as a
@@ -167,6 +131,68 @@ module Lingua
         @syllables.to_f / words.length.to_f
       end
 
+      private
+      def count_words
+        @text.scan(/\b([a-z][a-z\-']*)\b/i).each do |match|
+          word = match[0]
+          @words << word
+
+          # up frequency counts
+          @frequencies[word] += 1
+
+          # syllable counts
+          syllables = Lingua::EN::Syllable.syllables(word)
+          @syllables += syllables
+          if syllables > 2 && !word.include?('-')
+            @complex_words += 1 # for Fog Index
+          end
+        end
+      end
+
+      class << self
+          @paragraphs          = Lingua::EN::Paragraph.paragraphs(self.text)
+          @sentences           = Lingua::EN::Sentence.sentences(self.text)
+          @words               = []
+          @frequencies         = {}
+          @frequencies.default = 0
+          @syllables           = 0
+          @complex_words       = 0
+          self.count_words
+      end
+
+    end
+
+    class Readability
+      include Readable
+      attr_reader :text, :paragraphs, :sentences, :words, :frequencies
+
+      # The constructor accepts the text to be analysed, and returns a report
+      # object which gives access to the
+      def initialize(text, analysis=:all)
+        @text                = text.dup
+        @analysis            = analysis
+        count_words
+        case analysis
+          when :all
+            class << self
+            include Fog, Flesch, FleschKinkaid
+          end
+        when :fog
+          class << self
+            include Fog
+          end
+        when :flesch
+          class << self
+           include Flesch
+          end
+        when :kinkaid
+          class << self
+            include FleschKinkaid
+          end
+        end
+      end
+
+
       report_body = Proc.new {|*analyses|
           sprintf "Number of paragraphs           %d \n" <<
           "Number of sentences            %d \n" <<
@@ -192,23 +218,6 @@ module Lingua
             report_body.call(Kinkaid)
           when :fog
             report_body.call(Fog)
-        end
-      end
-      private
-      def count_words
-        @text.scan(/\b([a-z][a-z\-']*)\b/i).each do |match|
-          word = match[0]
-          @words << word
-
-          # up frequency counts
-          @frequencies[word] += 1
-
-          # syllable counts
-          syllables = Lingua::EN::Syllable.syllables(word)
-          @syllables += syllables
-          if syllables > 2 && !word.include?('-')
-            @complex_words += 1 # for Fog Index
-          end
         end
       end
     end
