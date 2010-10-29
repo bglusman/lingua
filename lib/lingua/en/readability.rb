@@ -131,66 +131,104 @@ module Lingua
         @syllables.to_f / words.length.to_f
       end
 
-      private
-      def count_words
+      def paragraphs
+        @paragraphs   ||= Lingua::EN::Paragraph.paragraphs(self.text)
+      end
+
+      def sentences
+        @sentences    ||= Lingua::EN::Sentence.sentences(self.text)
+      end
+
+      def words
+        @words        ||= []
+      end
+
+      def frequencies
+        if @frequencies.nil?
+          @frequencies = {}
+          @frequencies.default = 0
+        end
+          @frequencies
+      end
+
+      def syllables
+        @syllables ||= 0
+      end
+
+      def syllables=(value)
+        @syllables = value
+      end
+
+      def complex_words
+        @complex_words ||= 0
+      end
+
+      def complex_words=(value)
+        @complex_words = value
+      end
+
+
+      #private (public for now)
+
+      def count_syllables
         @text.scan(/\b([a-z][a-z\-']*)\b/i).each do |match|
           word = match[0]
-          @words << word
 
-          # up frequency counts
-          @frequencies[word] += 1
-
-          # syllable counts
-          syllables = Lingua::EN::Syllable.syllables(word)
-          @syllables += syllables
+          parsed_syllables = Lingua::EN::Syllable.syllables(word)
+          syllables += parsed_syllables
           if syllables > 2 && !word.include?('-')
-            @complex_words += 1 # for Fog Index
+            complex_words += 1 # for Fog Index
           end
         end
       end
 
-      class << self
-          @paragraphs          = Lingua::EN::Paragraph.paragraphs(self.text)
-          @sentences           = Lingua::EN::Sentence.sentences(self.text)
-          @words               = []
-          @frequencies         = {}
-          @frequencies.default = 0
-          @syllables           = 0
-          @complex_words       = 0
-          self.count_words
-      end
+      def count_words
+        text.scan(/\b([a-z][a-z\-']*)\b/i).each do |match|
+        word = match[0]
+        words += word
 
+        # up frequency counts
+        frequencies[word] += 1
+
+        # syllable counts
+        parsed_syllables = Lingua::EN::Syllable.syllables(word)
+        syllables += parsed_syllables
+        if parsed_syllables > 2 && !word.include?('-')
+          complex_words += 1 # for Fog Index
+        end
+      end
     end
+  end
 
-    class Readability
-      include Readable
-      attr_reader :text, :paragraphs, :sentences, :words, :frequencies
+  class Readability
+    include Readable
+    attr_reader :text, :paragraphs, :sentences, :words, :frequencies
 
-      # The constructor accepts the text to be analysed, and returns a report
-      # object which gives access to the
-      def initialize(text, analysis=:all)
-        @text                = text.dup
-        @analysis            = analysis
-        count_words
-        case analysis
-          when :all
-            class << self
-            include Fog, Flesch, FleschKinkaid
-          end
-        when :fog
-          class << self
-            include Fog
-          end
-        when :flesch
-          class << self
-           include Flesch
-          end
-        when :kinkaid
-          class << self
-            include FleschKinkaid
-          end
+    # The constructor accepts the text to be analysed, and returns a report
+    # object which gives access to the
+    def initialize(text_input, analysis=:all)
+      @text                = text_input.dup
+      @analysis            = analysis
+      case analysis
+      when :all
+        class << self
+        include Fog, Flesch, FleschKinkaid
+        end
+      when :fog
+        class << self
+          include Fog
+        end
+      when :flesch
+        class << self
+         include Flesch
+        end
+      when :kinkaid
+        class << self
+          include FleschKinkaid
         end
       end
+      count_words
+    end
 
 
       report_body = Proc.new {|*analyses|
