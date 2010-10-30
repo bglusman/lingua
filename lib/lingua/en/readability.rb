@@ -3,9 +3,9 @@ module Lingua
     # The class Lingua::EN::Readability takes English text and analyses formal
     # characteristic
     module Readable
-      attr_reader :paragraphs, :sentences, :words, :frequencies
-
+      extend self
       module Flesch
+        module_function
         def analysis
           flesch
         end
@@ -26,6 +26,7 @@ module Lingua
       end
 
       module FleschKinkaid
+        module_function
         def analysis
           kinkaid
         end
@@ -47,6 +48,7 @@ module Lingua
       end
 
       module Fog
+        module_function
         def analysis
           fog
         end
@@ -73,7 +75,8 @@ module Lingua
         end
       end
 
-
+      module_function
+      
       # The number of paragraphs in the sample. A paragraph is defined as a
       # newline followed by one or more empty or whitespace-only lines.
       def num_paragraphs
@@ -143,12 +146,16 @@ module Lingua
         @words        ||= []
       end
 
+      def words=(value)
+        @words = value
+      end
+
       def frequencies
         if @frequencies.nil?
           @frequencies = {}
           @frequencies.default = 0
         end
-          @frequencies
+        @frequencies
       end
 
       def syllables
@@ -175,89 +182,80 @@ module Lingua
           word = match[0]
 
           parsed_syllables = Lingua::EN::Syllable.syllables(word)
-          syllables += parsed_syllables
-          if syllables > 2 && !word.include?('-')
-            complex_words += 1 # for Fog Index
+          self.syllables += parsed_syllables
+          if self.syllables > 2 && !word.include?('-')
+            self.complex_words += 1 # for Fog Index
           end
         end
       end
 
       def count_words
         text.scan(/\b([a-z][a-z\-']*)\b/i).each do |match|
-        word = match[0]
-        words += word
+          word = match[0]
+          self.words.nil? ? self.words=[word] : self.words += word
 
-        # up frequency counts
-        frequencies[word] += 1
+          # up frequency counts
+          self.frequencies[word] += 1
 
-        # syllable counts
-        parsed_syllables = Lingua::EN::Syllable.syllables(word)
-        syllables += parsed_syllables
-        if parsed_syllables > 2 && !word.include?('-')
-          complex_words += 1 # for Fog Index
-        end
-      end
-    end
-  end
-
-  class Readability
-    include Readable
-    attr_reader :text, :paragraphs, :sentences, :words, :frequencies
-
-    # The constructor accepts the text to be analysed, and returns a report
-    # object which gives access to the
-    def initialize(text_input, analysis=:all)
-      @text                = text_input.dup
-      @analysis            = analysis
-      count_words
-      case analysis
-      when :all
-        class << self
-        include Fog, Flesch, FleschKinkaid
-        end
-      when :fog
-        class << self
-          include Fog
-        end
-      when :flesch
-        class << self
-         include Flesch
-        end
-      when :kinkaid
-        class << self
-          include FleschKinkaid
+          # syllable counts
+          parsed_syllables = Lingua::EN::Syllable.syllables(word)
+          syllables += parsed_syllables
+          if parsed_syllables > 2 && !word.include?('-')
+            self.complex_words += 1 # for Fog Index
+          end
         end
       end
     end
 
+    class Readability
+      include Readable
+      attr_reader :text, :paragraphs, :sentences, :words, :frequencies
+      include Fog, Flesch, FleschKinkaid
 
-      report_body = Proc.new {|*analyses|
+      # The constructor accepts the text to be analysed, and returns a report
+      # object which gives access to the
+      def initialize(text_input, analysis=:all)
+        @text                = text_input.dup
+        @analysis            = analysis
+        count_words
+  #      case analysis
+  #      when :all
+  #        class << self
+  #        include Fog, Flesch, FleschKinkaid
+  #        end
+  #      when :fog
+  #        class << self
+  #          include Fog
+  #        end
+  #      when :flesch
+  #        class << self
+  #         include Flesch
+  #        end
+  #      when :kinkaid
+  #        class << self
+  #          include FleschKinkaid
+  #        end
+  #      end
+       end
+
+
+        # Return a nicely formatted report on the sample, showing most the useful
+        # statistics about the text sample.
+
+        def report
           sprintf "Number of paragraphs           %d \n" <<
           "Number of sentences            %d \n" <<
           "Number of words                %d \n" <<
           "Number of characters           %d \n\n" <<
           "Average words per sentence     %.2f \n" <<
           "Average syllables per word     %.2f \n\n" <<
-          analyses.each_with_object {|anly, cumul| cumul << anly.report_string},
+          "Flesch score                   %2.2f \n" <<
+          "Flesh-Kincaid grade level      %2.2f \n" <<
+          "Fog Index                      %2.2f \n",
             num_paragraphs, num_sentences, num_words, num_characters,
-            words_per_sentence, syllables_per_word, *analyses.each {|anal| anal.analysis}
-      }
-
-      # Return a nicely formatted report on the sample, showing most the useful
-      # statistics about the text sample.
-
-      def report
-        case @analysis
-          when :all
-            report_body.call(Flesch, FleschKinkaid, Fog)
-          when :flesch
-            report_body.call(Flesch)
-          when :kinkaid
-            report_body.call(Kinkaid)
-          when :fog
-            report_body.call(Fog)
+            words_per_sentence, syllables_per_word,
+            flesch, kincaid, fog
         end
       end
     end
   end
-end
