@@ -61,7 +61,7 @@ module Lingua
         # The percentage of words that are defined as "complex" for the purpose of
         # the Fog Index. This is non-hyphenated words of three or more syllabes.
         def percent_fog_complex_words
-          ( @complex_words.to_f / words.length.to_f ) * 100
+          ( complex_words.to_f / words.length.to_f ) * 100
         end
 
         def report_string
@@ -100,22 +100,22 @@ module Lingua
 
       # The total number of syllables in the text sample. Just for completeness.
       def num_syllables
-        @syllables
+        syllables
       end
 
       # The number of different unique words used in the text sample.
       def num_unique_words
-        @frequencies.keys.length
+        frequencies.keys.length
       end
 
       # An array containing each unique word used in the text sample.
       def unique_words
-        @frequencies.keys
+        frequencies.keys
       end
 
       # The number of occurences of the word +word+ in the text sample.
       def occurrences(word)
-        @frequencies[word]
+        frequencies[word]
       end
 
       # The average number of words per sentence.
@@ -209,6 +209,7 @@ module Lingua
     def initialize(text_input, analysis=:all)
       @text                = text_input.dup
       @analysis            = analysis
+      count_words
       case analysis
       when :all
         class << self
@@ -227,7 +228,6 @@ module Lingua
           include FleschKinkaid
         end
       end
-      count_words
     end
 
 
