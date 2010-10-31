@@ -192,7 +192,7 @@ module Lingua
       def count_words
         text.scan(/\b([a-z][a-z\-']*)\b/i).each do |match|
           word = match[0]
-          self.words.nil? ? self.words=[word] : self.words += word
+          self.words.nil? ? self.words=word : self.words += word
 
           # up frequency counts
           self.frequencies[word] += 1
